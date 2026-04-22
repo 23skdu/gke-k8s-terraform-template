@@ -1,0 +1,5 @@
+project      = "my-gcp-project"
+region       = "us-central1"
+cluster_name = "gke-cluster"
+location     = "us-central1"
+node_count   = 1
