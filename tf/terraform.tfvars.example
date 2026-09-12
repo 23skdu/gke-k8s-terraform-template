@@ -1,5 +1,19 @@
 project      = "my-gcp-project"
 region       = "us-central1"
 cluster_name = "gke-cluster"
-location     = "us-central1"
+
+# Networking
+network              = "default"
+subnetwork           = "default"
+pods_range_name      = "pods"
+services_range_name  = "services"
+master_ipv4_cidr_block = "172.16.0.0/28"
+authorized_network_cidr = "0.0.0.0/0"
+
+# Node pool
 node_count   = 1
+machine_type = "e2-medium"
+environment  = "production"
+
+# Workload Identity
+namespace = "default"

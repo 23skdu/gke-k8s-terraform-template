@@ -21,5 +21,11 @@ output "cluster_id" {
 
 output "service_account_email" {
   description = "Cluster service account email"
-  value       = google_service_account.cluster-sa.email
+  value       = google_service_account.cluster_sa.email
+}
+
+output "cluster_ca_certificate" {
+  description = "Base64 encoded CA certificate for the cluster"
+  value       = google_container_cluster.cluster.master_auth[0].cluster_ca_certificate
+  sensitive   = true
 }
