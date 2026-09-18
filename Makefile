@@ -31,10 +31,10 @@ lint: ## Run tflint
 checkov: ## Run Checkov security scan
 	checkov -d $(TF_DIR) --framework terraform --quiet
 
-test-unit: ## Run plan-only unit tests
-	cd tests && go test -v -timeout 10m -run "TestGKEClusterPrivateNodes|TestGKEClusterWorkloadIdentity|TestGKEClusterAdvancedDatapath|TestGKEClusterGatewayAPI|TestGKEClusterReleaseChannel|TestGKEClusterLogging|TestGKEClusterMonitoring|TestGKENodePoolShieldedConfig|TestGKENodePoolAutoUpgrade|TestGKEClusterDeletionProtection|TestServiceAccountExists|TestIAMRolesAssigned|TestWorkloadIdentityBinding" ./...
+test-unit: ## Run plan-only unit tests (no GCP resources)
+	cd tests && go test -v -timeout 10m -run "TestGKEClusterPrivateNodes|TestGKEClusterWorkloadIdentity|TestGKEClusterAdvancedDatapath|TestGKEClusterGatewayAPI|TestGKEClusterReleaseChannel|TestGKEClusterLogging|TestGKEClusterMonitoring|TestGKENodePoolShieldedConfig|TestGKENodePoolAutoUpgrade|TestGKEClusterDeletionProtection|TestSystemNodePoolExists|TestNetworkingVPCExists|TestIAMServiceAccountExists|TestMonitoringAlertPolicies" ./...
 
-test-integration: ## Run full integration tests (creates real resources, costs money)
+test-integration: ## Run full integration tests (creates real GCP resources)
 	cd tests && go test -v -timeout 30m ./...
 
 test: ## Run all tests
