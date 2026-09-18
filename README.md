@@ -29,6 +29,15 @@ Terraform template for provisioning a Google Kubernetes Engine (GKE) cluster on 
 │   ├── namespaces.tf           # Kubernetes namespaces
 │   ├── logging.tf              # Cloud Logging configuration
 │   └── terraform.tfvars.example
+├── tests/                      # Terratest integration tests (Go)
+│   ├── gke_test.go             # GKE cluster validation tests
+│   ├── iam_test.go             # IAM and service account tests
+│   ├── kubernetes_test.go      # Kubernetes namespace tests
+│   ├── logging_test.go         # Cloud Logging tests
+│   ├── storage_test.go         # GCS bucket tests
+│   ├── main_test.go            # Shared test helpers
+│   ├── go.mod                  # Go module dependencies
+│   └── README.md               # Test instructions
 ├── LICENSE
 └── README.md
 ```
@@ -112,6 +121,20 @@ After provisioning, get credentials:
 ```bash
 gcloud container clusters get-credentials CLUSTER_NAME --region=REGION --project=PROJECT
 ```
+
+## Testing
+
+This project includes automated tests using [Terratest](https://terratest.gruntwork.io/) to validate the Terraform configuration.
+
+```bash
+# Run all tests
+cd tests && go test -v -timeout 30m ./...
+
+# Run a specific test
+cd tests && go test -v -run TestGKEClusterExists -timeout 30m ./...
+```
+
+See [tests/README.md](tests/README.md) for full test documentation including prerequisites, troubleshooting, and available test suites.
 
 ## Clean Up
 
