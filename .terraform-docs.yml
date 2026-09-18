@@ -1,0 +1,69 @@
+formatter: markdown table
+
+output:
+  file: README.md
+  mode: replace
+  template: |-
+    {{ template "modules" . }}
+
+    {{ template "resources" . }}
+
+content: |-
+  {{ with .Module }}
+  ## Module {{ .Name }}
+
+  {{ .Description | default "No description provided." }}
+
+  {{ if .Providers }}
+  ### Providers
+
+  | Name | Version |
+  |------|---------|
+  {{ range .Providers }}
+  | {{ .Name }} | {{ .Version | default "N/A" }} |
+  {{ end }}
+  {{ end }}
+
+  {{ if .Requirements }}
+  ### Requirements
+
+  | Name | Version |
+  |------|---------|
+  {{ range .Requirements }}
+  | {{ .Name }} | {{ .Version | default "N/A" }} |
+  {{ end }}
+  {{ end }}
+
+  {{ if .Resources }}
+  ### Resources
+
+  | Name | Type |
+  |------|------|
+  {{ range .Resources }}
+  | {{ .Name }} | {{ .Type }} |
+  {{ end }}
+  {{ end }}
+
+  {{ if .Inputs }}
+  ### Inputs
+
+  | Name | Description | Type | Default | Required |
+  |------|-------------|------|---------|----------|
+  {{ range .Inputs }}
+  | {{ .Name }} | {{ .Description | replace "\n" " " | htmlEscape }} | {{ .Type | htmlEscape }} | {{ .Default | htmlEscape | codeFn }} | {{ if .Required }}yes{{ else }}no{{ end }} |
+  {{ end }}
+  {{ end }}
+
+  {{ if .Outputs }}
+  ### Outputs
+
+  | Name | Description |
+  |------|-------------|
+  {{ range .Outputs }}
+  | {{ .Name }} | {{ .Description | replace "\n" " " | htmlEscape }} |
+  {{ end }}
+  {{ end }}
+  {{ end }}
+sort:
+  enabled: true
+  by: name

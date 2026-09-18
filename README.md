@@ -1,52 +1,64 @@
 # GKE Kubernetes Terraform Template
 
-Terraform template for provisioning a Google Kubernetes Engine (GKE) cluster on GCP with security and production best practices.
+Terraform template for provisioning a production-ready Google Kubernetes Engine (GKE) cluster on GCP with modular architecture and multi-environment support.
 
 ## Features
 
+- **Modular architecture** with reusable `modules/` for GKE, IAM, networking, monitoring, backup, security, and secrets
+- **Multi-environment support** with per-environment tfvars in `environments/`
 - **GKE Standard cluster** with VPC-native networking
 - **Private cluster** with restricted master endpoint access
 - **Workload Identity** for secure pod-to-GCP authentication
 - **Shielded Nodes** with secure boot and integrity monitoring
 - **Datapath Provider** (advanced datapath) for network policy enforcement
 - **Gateway API** support for ingress management
-- **Managed Prometheus** monitoring
+- **Managed Prometheus** monitoring with alerting policies
 - **Cloud Logging** with system and workload components
-- **Auto-upgrade and auto-repair** node management
-- **Node pool autoscaling** with configurable min/max counts
+- **Dedicated VPC** with firewall rules and Cloud NAT
+- **System node pool** with taints for cluster-critical workloads
+- **Main node pool** with autoscaling
+- **GKE Backup** plans for disaster recovery
+- **Binary Authorization** for image verification (optional)
+- **Secret Manager** integration with IAM bindings
 - **Deletion protection** enabled by default for production safety
-- **Parameterized namespaces** for creating multiple Kubernetes namespaces
 - **GCS backend** with versioning for Terraform state
-- **CI/CD pipeline** with GitHub Actions for linting, validation, and testing
+- **CI/CD pipeline** with GitHub Actions
 - **Pre-commit hooks** for local quality checks
-- **Static analysis** via tflint and checkov
+- **tflint** and **checkov** for static analysis
+- **terraform-docs** for auto-generated documentation
 
 ## Structure
 
 ```
 .
-├── .github/workflows/ci.yml    # GitHub Actions CI pipeline
-├── .pre-commit-config.yaml     # Pre-commit hooks config
-├── .tflint.hcl                 # tflint configuration
-├── tf/                         # Terraform configuration
-│   ├── main.tf                 # Provider and backend configuration
-│   ├── variables.tf            # Input variables
-│   ├── outputs.tf              # Output values
-│   ├── gke.tf                  # GKE cluster and node pool
-│   ├── iam.tf                  # IAM service account and Workload Identity
-│   ├── gcsbuckets.tf           # GCS bucket for tfstate
-│   ├── namespaces.tf           # Kubernetes namespaces
-│   ├── logging.tf              # Cloud Logging configuration
+├── .github/workflows/ci.yml        # GitHub Actions CI pipeline
+├── .pre-commit-config.yaml         # Pre-commit hooks config
+├── .tflint.hcl                     # tflint configuration
+├── .terraform-docs.yml             # terraform-docs configuration
+├── Makefile                        # Common operations
+├── modules/                        # Reusable Terraform modules
+│   ├── gke/                        # GKE cluster and node pools
+│   ├── iam/                        # Service account and IAM roles
+│   ├── networking/                 # VPC, subnets, firewall, Cloud NAT
+│   ├── monitoring/                 # Logging and alerting
+│   ├── backup/                     # GKE backup plans
+│   ├── security/                   # Binary Authorization
+│   ├── secrets/                    # Secret Manager
+│   └── kubernetes/                 # Kubernetes namespaces
+├── environments/                   # Per-environment configuration
+│   ├── dev/terraform.tfvars
+│   ├── staging/terraform.tfvars
+│   └── prod/terraform.tfvars
+├── tf/                             # Root Terraform configuration
+│   ├── main.tf                     # Provider configuration
+│   ├── variables.tf                # Input variables
+│   ├── outputs.tf                  # Output values
 │   └── terraform.tfvars.example
-├── tests/                      # Terratest integration tests (Go)
-│   ├── gke_test.go             # GKE cluster validation tests
-│   ├── iam_test.go             # IAM and service account tests
-│   ├── kubernetes_test.go      # Kubernetes namespace tests
-│   ├── logging_test.go         # Cloud Logging tests
-│   ├── storage_test.go         # GCS bucket tests
-│   ├── main_test.go            # Shared test helpers
-│   ├── go.mod                  # Go module dependencies
-│   └── README.md               # Test instructions
+├── tests/                          # Terratest tests (Go)
+│   ├── gke_test.go                 # GKE cluster tests
+│   ├── iam_test.go                 # IAM tests
+│   ├── main_test.go                # Shared test helpers
+│   └── README.md
 ├── LICENSE
 └── README.md
 ```
@@ -56,12 +68,11 @@ Terraform template for provisioning a Google Kubernetes Engine (GKE) cluster on 
 - [Terraform](https://www.terraform.io/downloads) >= 1.15
 - [gcloud CLI](https://cloud.google.com/sdk/docs/install)
 - [Go](https://go.dev/doc/install) >= 1.21 (for tests)
+- [tflint](https://github.com/terraform-linters/tflint) (for linting)
+- [pre-commit](https://pre-commit.com/) (optional)
 - GCP project with billing enabled
-- A VPC network with two secondary IP ranges (for pods and services)
 
 ### Required APIs
-
-Enable the following APIs in your GCP project:
 
 ```bash
 gcloud services enable \
@@ -69,105 +80,92 @@ gcloud services enable \
   compute.googleapis.com \
   logging.googleapis.com \
   monitoring.googleapis.com \
-  iam.googleapis.com
+  iam.googleapis.com \
+  backupdr.googleapis.com \
+  binaryauthorization.googleapis.com \
+  secretmanager.googleapis.com
 ```
 
-## Usage
+## Quick Start
 
-1. Authenticate with GCP:
-   ```bash
-   gcloud auth application-default login
-   gcloud auth login
-   ```
-
-2. Set your project:
-   ```bash
-   gcloud config set project YOUR_PROJECT_ID
-   ```
-
-3. Copy the example variables file:
-   ```bash
-   cp tf/terraform.tfvars.example tf/terraform.tfvars
-   ```
-
-4. Edit `tf/terraform.tfvars` with your values:
-   ```hcl
-   project      = "my-gcp-project"
-   region       = "us-central1"
-   cluster_name = "gke-cluster"
-
-   # Networking (must match your VPC/subnet configuration)
-   network                = "default"
-   subnetwork             = "default"
-   pods_range_name        = "pods"
-   services_range_name    = "services"
-   master_ipv4_cidr_block = "172.16.0.0/28"
-   authorized_network_cidr = "0.0.0.0/0"
-
-   # Cluster behavior
-   deletion_protection = true  # Set to false in non-production
-
-   # Node pool with autoscaling
-   machine_type        = "e2-medium"
-   node_pool_min_count = 1
-   node_pool_max_count = 5
-   environment         = "production"
-
-   # Namespaces
-   namespaces = ["default", "prod"]
-
-   # Workload Identity
-   namespace = "default"
-   ```
-
-5. Initialize Terraform:
-   ```bash
-   cd tf
-   terraform init
-   ```
-
-6. Plan and apply:
-   ```bash
-   terraform plan -out=tfplan
-   terraform apply tfplan
-   ```
-
-## Getting Cluster Credentials
-
-After provisioning, get credentials:
 ```bash
-gcloud container clusters get-credentials CLUSTER_NAME --region=REGION --project=PROJECT
+# 1. Authenticate
+gcloud auth application-default login
+
+# 2. Initialize
+make init ENV=dev
+
+# 3. Plan
+make plan ENV=dev
+
+# 4. Apply
+make apply ENV=dev
+
+# 5. Get credentials
+gcloud container clusters get-credentials gke-dev --region=us-central1 --project=YOUR_PROJECT
 ```
+
+## Multi-Environment Deployment
+
+Each environment has its own `terraform.tfvars` in `environments/`:
+
+| Environment | Cluster | Deletion Protection | Autoscaling | Backup |
+|-------------|---------|---------------------|-------------|--------|
+| `dev` | `gke-dev` | off | 1-3 nodes | off |
+| `staging` | `gke-staging` | off | 1-5 nodes | 14 days |
+| `prod` | `gke-prod` | **on** | 2-10 nodes | 30 days |
+
+Deploy to a specific environment:
+```bash
+make plan ENV=staging
+make apply ENV=staging
+```
+
+## Modules
+
+| Module | Description |
+|--------|-------------|
+| `networking` | VPC, subnets, firewall rules, Cloud NAT |
+| `iam` | Service account, IAM roles, Workload Identity |
+| `gke` | GKE cluster, main + system node pools, namespaces |
+| `monitoring` | Cloud Logging, alerting policies, notification channels |
+| `backup` | GKE Backup plans |
+| `security` | Binary Authorization policies |
+| `secrets` | Secret Manager secrets with IAM bindings |
+| `kubernetes` | Kubernetes namespaces |
 
 ## Testing
 
-This project includes automated tests using [Terratest](https://terratest.gruntwork.io/) to validate the Terraform configuration.
-
 ```bash
-# Run all tests
-cd tests && go test -v -timeout 30m ./...
+# Run plan-only tests (no GCP resources created)
+make test-unit
 
-# Run a specific test
-cd tests && go test -v -run TestGKEClusterExists -timeout 30m ./...
+# Run full integration tests (creates real GCP resources)
+make test-integration
+
+# Run all tests
+make test
 ```
 
-See [tests/README.md](tests/README.md) for full test documentation including prerequisites, troubleshooting, and available test suites.
+See [tests/README.md](tests/README.md) for details.
 
 ## Linting & Validation
 
-This project uses tflint and checkov for static analysis. Run locally:
-
 ```bash
-# Install tflint
-curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+# Format
+make fmt
 
-# Lint Terraform
-cd tf && tflint --config=../.tflint.hcl
+# Validate
+make validate
+
+# tflint
+make lint
+
+# Checkov
+make checkov
 ```
 
 ## Pre-commit Hooks
-
-Set up pre-commit hooks to run linting and validation before each commit:
 
 ```bash
 pip install pre-commit
@@ -176,16 +174,16 @@ pre-commit install
 
 ## CI/CD
 
-GitHub Actions runs on every push and PR to `main`:
-- **Terraform format check**, init, and validate
-- **tflint** static analysis
-- **Checkov** security scanning
-- **Terratest** plan-only tests (no GCP credentials required)
+GitHub Actions runs on push/PR to `main`:
+- Terraform format, init, validate (root + modules)
+- tflint static analysis
+- Checkov security scanning
+- Terratest plan-only tests
 
 ## Clean Up
 
 ```bash
-terraform destroy
+make destroy ENV=dev
 ```
 
 ## License

@@ -1,7 +1,7 @@
 project      = "my-gcp-project"
 region       = "us-central1"
-cluster_name = "gke-cluster"
-environment  = "production"
+cluster_name = "gke-dev"
+environment  = "dev"
 
 # Networking
 network_name          = "gke-network"
@@ -9,34 +9,34 @@ subnet_cidr           = "10.0.0.0/20"
 pods_cidr             = "10.4.0.0/14"
 services_cidr         = "10.8.0.0/20"
 master_ipv4_cidr_block = "172.16.0.0/28"
-authorized_network_cidr = "10.0.0.0/8"
+authorized_network_cidr = "0.0.0.0/0"
 
 # Cluster
-deletion_protection = true
+deletion_protection = false
 
 # Main node pool
 main_machine_type = "e2-medium"
 main_min_count    = 1
-main_max_count    = 5
+main_max_count    = 3
 
 # System node pool
-system_machine_type = "e2-medium"
+system_machine_type = "e2-small"
 system_min_count    = 1
-system_max_count    = 3
+system_max_count    = 2
 
 # Namespaces
-namespaces = ["default", "prod"]
+namespaces = ["default", "dev"]
 
 # IAM
 namespace = "default"
 
 # Monitoring
-notification_email = "ops@example.com"
-enable_alerting    = true
+notification_email = ""
+enable_alerting    = false
 
 # Backup
-enable_backup        = true
-backup_retention_days = 30
+enable_backup        = false
+backup_retention_days = 7
 
 # Security
 enable_binary_authorization = false

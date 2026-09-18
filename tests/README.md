@@ -33,73 +33,71 @@ gcloud services enable \
    gcloud config set project YOUR_PROJECT_ID
    ```
 
-3. Copy the example variables file and edit with your values:
-   ```bash
-   cp tf/terraform.tfvars.example tf/terraform.tfvars
-   ```
-
 ## Running Tests
 
 From the `tests/` directory:
 
 ```bash
 # Run all tests
-go test -v ./...
+go test -v -timeout 30m ./...
 
 # Run a specific test
-go test -v -run TestGKEClusterExists ./...
+go test -v -run TestGKEClusterExists -timeout 30m ./...
 
-# Run tests in parallel (default behavior)
-go test -v -parallel 4 ./...
+# Run plan-only tests (no GCP resources created)
+go test -v -timeout 10m -run "Plan|Private|Workload|Datapath|Gateway|Release|Logging|Monitoring|Shielded|AutoUpgrade|Deletion|ServiceAccount|IAMRoles|WorkloadIdentity" ./...
+```
 
-# Run with a timeout (tests can take a while due to GCP resource creation)
-go test -v -timeout 30m ./...
+Or use the Makefile from the project root:
+
+```bash
+make test-unit           # Plan-only tests
+make test-integration    # Full tests (creates real resources)
+make test                # All tests
 ```
 
 ### Useful Flags
 
 | Flag | Description |
 |------|-------------|
-| `-v` | Verbose output showing test progress |
-| `-run <pattern>` | Run only tests matching the regex pattern |
-| `-timeout <duration>` | Set test timeout (default: 10m, recommended: 30m+) |
-| `-parallel <n>` | Number of tests to run concurrently |
+| `-v` | Verbose output |
+| `-run <pattern>` | Run only tests matching regex |
+| `-timeout <duration>` | Test timeout (default: 10m, recommended: 30m+) |
+| `-parallel <n>` | Concurrent test count |
 | `-count=1` | Disable test caching |
 
 ## Test Suite
 
-Tests are organized by resource type:
-
 | File | Tests |
 |------|-------|
-| `gke_test.go` | GKE cluster creation, endpoint, location, CA certificate, private nodes, workload identity, datapath, gateway API, release channel, logging, monitoring, node pool config, deletion protection |
-| `iam_test.go` | Service account creation, email output, IAM role assignments, workload identity binding |
-| `kubernetes_test.go` | Kubernetes namespace validation |
-| `logging_test.go` | Cloud Logging sink configuration |
-| `storage_test.go` | GCS bucket for Terraform state |
-| `main_test.go` | Shared `GetTerraformOptions` helper and test setup |
+| `gke_test.go` | Cluster creation, endpoint, location, CA cert, private nodes, workload identity, datapath, gateway API, release channel, logging, monitoring, node pool config, deletion protection |
+| `iam_test.go` | Service account, email output, IAM roles, workload identity binding |
+| `main_test.go` | Shared `GetTerraformOptions` helper with module-compatible variables |
 
 ## Test Types
 
-- **Plan-only tests** (`InitAndPlanAndShowWithStruct`): Validate resource configuration without creating real infrastructure. These are fast and safe.
-- **Apply tests** (`InitAndApply`): Create real GCP resources and validate outputs. These are slower and incur costs.
+- **Plan-only tests** (`InitAndPlanAndShowWithStruct`): Validate config without creating infrastructure. Fast, free, no credentials needed.
+- **Apply tests** (`InitAndApply`): Create real GCP resources. Slower, costs money.
+
+## Module-Aware Testing
+
+Tests pass variables matching the new module-based root `tf/` configuration. The `GetTerraformOptions` helper in `main_test.go` sets all required variables including networking, node pools, and feature flags.
 
 ## Cleanup
 
-Tests use `defer terraform.Destroy()` to clean up resources automatically after each test. If tests are interrupted, manually destroy:
+Tests use `defer terraform.Destroy()` to clean up automatically. If interrupted:
 
 ```bash
-cd tf
-terraform destroy
+make destroy ENV=dev
 ```
 
 ## Cost Considerations
 
-Apply tests provision real GKE clusters and associated resources. Expect GCP charges during test runs. Run plan-only tests first for quick validation.
+Apply tests provision real GKE clusters. Expect GCP charges. Run plan-only tests (`make test-unit`) first.
 
 ## Troubleshooting
 
-- **Timeout errors**: Increase the timeout with `-timeout 30m` or higher.
-- **Authentication errors**: Ensure `gcloud auth application-default login` is run and credentials are valid.
-- **Permission errors**: The authenticated account needs sufficient IAM roles (e.g., Editor or Owner) on the target GCP project.
-- **Quota errors**: Check GCP project quotas for compute resources, IPs, and GKE clusters.
+- **Timeout errors**: Increase with `-timeout 30m` or higher.
+- **Auth errors**: Run `gcloud auth application-default login`.
+- **Permission errors**: Account needs Editor/Owner on the target project.
+- **Quota errors**: Check GCP quotas for compute, IPs, and GKE clusters.

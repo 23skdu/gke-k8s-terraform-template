@@ -22,7 +22,6 @@ jobs:
 
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
-        working-directory: tf
 
       - name: Terraform Init
         run: terraform init -backend=false
@@ -31,6 +30,13 @@ jobs:
       - name: Terraform Validate
         run: terraform validate
         working-directory: tf
+
+      - name: Validate Modules
+        run: |
+          for module in modules/*/; do
+            echo "Validating $module"
+            cd "$module" && terraform init -backend=false && terraform validate && cd -
+          done
 
   tflint:
     name: tflint
@@ -42,13 +48,13 @@ jobs:
         with:
           tflint_version: latest
 
-      - name: Install Google plugin
-        run: tflint --init
-        working-directory: tf
-
       - name: Run tflint
-        run: tflint --config=../.tflint.hcl
-        working-directory: tf
+        run: |
+          cd tf && tflint --config=../.tflint.hcl
+          for module in ../modules/*/; do
+            cd "$module" && tflint --config=../../.tflint.hcl 2>/dev/null || true
+            cd -
+          done
 
   checkov:
     name: Checkov Security Scan

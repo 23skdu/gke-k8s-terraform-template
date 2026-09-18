@@ -1,21 +1,19 @@
 resource "google_container_cluster" "cluster" {
-  name     = var.cluster_name
+  name     = "${var.cluster_name}-${var.environment}"
   location = var.region
+  project  = var.project
 
-  # We manage our own node pool
   remove_default_node_pool = true
   initial_node_count       = 1
 
-  # Networking - VPC-native cluster
-  network    = var.network
-  subnetwork = var.subnetwork
+  network    = var.network_id
+  subnetwork = var.subnet_id
 
   ip_allocation_policy {
     cluster_secondary_range_name  = var.pods_range_name
     services_secondary_range_name = var.services_range_name
   }
 
-  # Private cluster configuration
   private_cluster_config {
     enable_private_nodes    = true
     enable_private_endpoint = false
@@ -29,25 +27,20 @@ resource "google_container_cluster" "cluster" {
     }
   }
 
-  # Workload Identity
   workload_identity_config {
     workload_pool = "${var.project}.svc.id.goog"
   }
 
-  # Datapath Provider (replaces legacy network policy)
   datapath_provider = "ADVANCED_DATAPATH"
 
-  # Gateway API (replaces Ingress controller)
   gateway_api_config {
     channel = "CHANNEL_STANDARD"
   }
 
-  # Release channel
   release_channel {
     channel = "REGULAR"
   }
 
-  # Addons
   addons_config {
     horizontal_pod_autoscaling {
       disabled = false
@@ -58,17 +51,15 @@ resource "google_container_cluster" "cluster" {
     network_policy_config {
       disabled = false
     }
+    gce_persistent_disk_csi_driver_config {
+      enabled = true
+    }
   }
 
-  # Security
-  # Node security config (Shielded Nodes default on for new clusters)
-
-  # Cluster logging
   logging_config {
     enable_components = ["SYSTEM_COMPONENTS", "WORKLOADS"]
   }
 
-  # Cluster monitoring
   monitoring_config {
     enable_components = ["SYSTEM_COMPONENTS"]
     managed_prometheus {
@@ -84,20 +75,22 @@ resource "google_container_cluster" "cluster" {
   deletion_protection = var.deletion_protection
 }
 
+# Main workload node pool
 resource "google_container_node_pool" "main" {
   name     = "main"
   location = var.region
   cluster  = google_container_cluster.cluster.name
+  project  = var.project
 
   autoscaling {
-    min_node_count  = var.node_pool_min_count
-    max_node_count  = var.node_pool_max_count
+    min_node_count = var.main_min_count
+    max_node_count = var.main_max_count
   }
 
   node_config {
-    machine_type = var.machine_type
+    machine_type = var.main_machine_type
 
-    service_account = google_service_account.cluster_sa.email
+    service_account = var.service_account_email
 
     workload_metadata_config {
       mode = "GKE_METADATA"
@@ -110,6 +103,7 @@ resource "google_container_node_pool" "main" {
 
     labels = {
       environment = var.environment
+      pool        = "main"
     }
 
     tags = ["gke-node"]
@@ -123,5 +117,69 @@ resource "google_container_node_pool" "main" {
   upgrade_settings {
     max_surge       = 1
     max_unavailable = 0
+  }
+}
+
+# System node pool for cluster-critical workloads
+resource "google_container_node_pool" "system" {
+  name     = "system"
+  location = var.region
+  cluster  = google_container_cluster.cluster.name
+  project  = var.project
+
+  autoscaling {
+    min_node_count = var.system_min_count
+    max_node_count = var.system_max_count
+  }
+
+  node_config {
+    machine_type = var.system_machine_type
+
+    service_account = var.service_account_email
+
+    workload_metadata_config {
+      mode = "GKE_METADATA"
+    }
+
+    shielded_instance_config {
+      enable_secure_boot          = true
+      enable_integrity_monitoring = true
+    }
+
+    labels = {
+      environment = var.environment
+      pool        = "system"
+    }
+
+    taint {
+      key    = "node-pool"
+      value  = "system"
+      effect = "PREFER_NO_SCHEDULE"
+    }
+
+    tags = ["gke-node"]
+  }
+
+  management {
+    auto_upgrade = true
+    auto_repair  = true
+  }
+
+  upgrade_settings {
+    max_surge       = 1
+    max_unavailable = 0
+  }
+}
+
+# Kubernetes namespaces
+resource "kubernetes_namespace_v1" "namespaces" {
+  for_each = toset(var.namespaces)
+
+  metadata {
+    name = each.value
+
+    labels = {
+      environment = var.environment
+    }
   }
 }

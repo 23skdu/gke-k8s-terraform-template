@@ -1,16 +1,12 @@
 resource "google_service_account" "cluster_sa" {
-  account_id   = "${var.cluster_name}-sa"
-  display_name = "GKE Cluster Service Account"
+  account_id   = "${var.cluster_name}-${var.environment}-sa"
+  display_name = "GKE Cluster Service Account (${var.environment})"
   description  = "Service account for GKE cluster nodes"
+  project      = var.project
 }
 
 resource "google_project_iam_member" "cluster_sa_roles" {
-  for_each = toset([
-    "roles/logging.logWriter",
-    "roles/monitoring.metricWriter",
-    "roles/monitoring.viewer",
-    "roles/stackdriver.resourceMetadata.writer",
-  ])
+  for_each = toset(var.iam_roles)
 
   project = var.project
   role    = each.value
