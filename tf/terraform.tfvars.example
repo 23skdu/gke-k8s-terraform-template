@@ -10,10 +10,17 @@ services_range_name  = "services"
 master_ipv4_cidr_block = "172.16.0.0/28"
 authorized_network_cidr = "0.0.0.0/0"
 
-# Node pool
-node_count   = 1
-machine_type = "e2-medium"
-environment  = "production"
+# Cluster behavior
+deletion_protection = false  # Set to true in production
 
-# Workload Identity
+# Node pool
+machine_type       = "e2-medium"
+environment        = "production"
+node_pool_min_count = 1
+node_pool_max_count = 5
+
+# Namespaces
+namespaces = ["default", "prod"]
+
+# Workload Identity (used for IAM binding)
 namespace = "default"

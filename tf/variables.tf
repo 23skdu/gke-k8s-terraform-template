@@ -27,12 +27,6 @@ variable "namespace" {
   default     = "default"
 }
 
-variable "node_count" {
-  description = "Number of nodes in the node pool"
-  type        = number
-  default     = 1
-}
-
 variable "machine_type" {
   description = "Machine type for the node pool"
   type        = string
@@ -77,4 +71,34 @@ variable "authorized_network_cidr" {
   description = "CIDR block allowed to access the GKE master endpoint"
   type        = string
   default     = "0.0.0.0/0"
+}
+
+# Cluster behavior
+
+variable "deletion_protection" {
+  description = "Enable deletion protection for the GKE cluster. Set to false in non-production environments."
+  type        = bool
+  default     = true
+}
+
+# Node pool autoscaling
+
+variable "node_pool_min_count" {
+  description = "Minimum number of nodes in the node pool"
+  type        = number
+  default     = 1
+}
+
+variable "node_pool_max_count" {
+  description = "Maximum number of nodes in the node pool"
+  type        = number
+  default     = 5
+}
+
+# Namespaces
+
+variable "namespaces" {
+  description = "List of Kubernetes namespaces to create"
+  type        = list(string)
+  default     = ["default", "prod"]
 }

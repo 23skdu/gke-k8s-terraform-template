@@ -13,12 +13,21 @@ Terraform template for provisioning a Google Kubernetes Engine (GKE) cluster on 
 - **Managed Prometheus** monitoring
 - **Cloud Logging** with system and workload components
 - **Auto-upgrade and auto-repair** node management
+- **Node pool autoscaling** with configurable min/max counts
+- **Deletion protection** enabled by default for production safety
+- **Parameterized namespaces** for creating multiple Kubernetes namespaces
 - **GCS backend** with versioning for Terraform state
+- **CI/CD pipeline** with GitHub Actions for linting, validation, and testing
+- **Pre-commit hooks** for local quality checks
+- **Static analysis** via tflint and checkov
 
 ## Structure
 
 ```
 .
+├── .github/workflows/ci.yml    # GitHub Actions CI pipeline
+├── .pre-commit-config.yaml     # Pre-commit hooks config
+├── .tflint.hcl                 # tflint configuration
 ├── tf/                         # Terraform configuration
 │   ├── main.tf                 # Provider and backend configuration
 │   ├── variables.tf            # Input variables
@@ -46,6 +55,7 @@ Terraform template for provisioning a Google Kubernetes Engine (GKE) cluster on 
 
 - [Terraform](https://www.terraform.io/downloads) >= 1.15
 - [gcloud CLI](https://cloud.google.com/sdk/docs/install)
+- [Go](https://go.dev/doc/install) >= 1.21 (for tests)
 - GCP project with billing enabled
 - A VPC network with two secondary IP ranges (for pods and services)
 
@@ -94,10 +104,17 @@ gcloud services enable \
    master_ipv4_cidr_block = "172.16.0.0/28"
    authorized_network_cidr = "0.0.0.0/0"
 
-   # Node pool
-   node_count   = 1
-   machine_type = "e2-medium"
-   environment  = "production"
+   # Cluster behavior
+   deletion_protection = true  # Set to false in non-production
+
+   # Node pool with autoscaling
+   machine_type        = "e2-medium"
+   node_pool_min_count = 1
+   node_pool_max_count = 5
+   environment         = "production"
+
+   # Namespaces
+   namespaces = ["default", "prod"]
 
    # Workload Identity
    namespace = "default"
@@ -135,6 +152,35 @@ cd tests && go test -v -run TestGKEClusterExists -timeout 30m ./...
 ```
 
 See [tests/README.md](tests/README.md) for full test documentation including prerequisites, troubleshooting, and available test suites.
+
+## Linting & Validation
+
+This project uses tflint and checkov for static analysis. Run locally:
+
+```bash
+# Install tflint
+curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+
+# Lint Terraform
+cd tf && tflint --config=../.tflint.hcl
+```
+
+## Pre-commit Hooks
+
+Set up pre-commit hooks to run linting and validation before each commit:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+## CI/CD
+
+GitHub Actions runs on every push and PR to `main`:
+- **Terraform format check**, init, and validate
+- **tflint** static analysis
+- **Checkov** security scanning
+- **Terratest** plan-only tests (no GCP credentials required)
 
 ## Clean Up
 

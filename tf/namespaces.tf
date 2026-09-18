@@ -1,5 +1,7 @@
-resource "kubernetes_namespace_v1" "prod" {
+resource "kubernetes_namespace_v1" "namespaces" {
+  for_each = toset(var.namespaces)
+
   metadata {
-    name = "prod"
+    name = each.value
   }
 }

@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  terraform-lint:
+    name: Terraform Lint & Validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.15"
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+        working-directory: tf
+
+      - name: Terraform Init
+        run: terraform init -backend=false
+        working-directory: tf
+
+      - name: Terraform Validate
+        run: terraform validate
+        working-directory: tf
+
+  tflint:
+    name: tflint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: latest
+
+      - name: Install Google plugin
+        run: tflint --init
+        working-directory: tf
+
+      - name: Run tflint
+        run: tflint --config=../.tflint.hcl
+        working-directory: tf
+
+  checkov:
+    name: Checkov Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: tf
+          framework: terraform
+          quiet: true
+          soft_fail: true
+          skip_check: CKV_GKE_12,CKV_GKE_13,CKV_GKE_14,CKV_GKE_15,CKV_GKE_16
+
+  go-tests:
+    name: Terratest Plan-Only
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Go Vet
+        run: go vet ./...
+
+      - name: Go Test (plan-only)
+        run: |
+          go test -v -timeout 10m -run "TestGKEClusterPrivateNodes|TestGKEClusterWorkloadIdentity|TestGKEClusterAdvancedDatapath|TestGKEClusterGatewayAPI|TestGKEClusterReleaseChannel|TestGKEClusterLogging|TestGKEClusterMonitoring|TestGKENodePoolShieldedConfig|TestGKENodePoolAutoUpgrade|TestGKEClusterDeletionProtection|TestServiceAccountExists|TestIAMRolesAssigned|TestWorkloadIdentityBinding" ./...

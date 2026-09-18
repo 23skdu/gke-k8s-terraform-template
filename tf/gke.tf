@@ -81,7 +81,7 @@ resource "google_container_cluster" "cluster" {
     update = "30m"
   }
 
-  deletion_protection = false
+  deletion_protection = var.deletion_protection
 }
 
 resource "google_container_node_pool" "main" {
@@ -89,7 +89,10 @@ resource "google_container_node_pool" "main" {
   location = var.region
   cluster  = google_container_cluster.cluster.name
 
-  initial_node_count = var.node_count
+  autoscaling {
+    min_node_count  = var.node_pool_min_count
+    max_node_count  = var.node_pool_max_count
+  }
 
   node_config {
     machine_type = var.machine_type
