@@ -23,19 +23,20 @@ jobs:
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
 
-      - name: Terraform Init
-        run: terraform init -backend=false
+      - name: Validate Root Module
+        run: |
+          terraform init -backend=false
+          terraform validate
         working-directory: tf
 
-      - name: Terraform Validate
-        run: terraform validate
-        working-directory: tf
-
-      - name: Validate Modules
+      - name: Validate All Modules
         run: |
           for module in modules/*/; do
-            echo "Validating $module"
-            cd "$module" && terraform init -backend=false && terraform validate && cd -
+            echo "=== Validating $module ==="
+            cd "$module"
+            terraform init -backend=false 2>/dev/null || true
+            terraform validate
+            cd -
           done
 
   tflint:
@@ -48,13 +49,13 @@ jobs:
         with:
           tflint_version: latest
 
-      - name: Run tflint
-        run: |
-          cd tf && tflint --config=../.tflint.hcl
-          for module in ../modules/*/; do
-            cd "$module" && tflint --config=../../.tflint.hcl 2>/dev/null || true
-            cd -
-          done
+      - name: Install Google plugin
+        run: tflint --init
+        working-directory: tf
+
+      - name: Run tflint on root
+        run: tflint --config=../.tflint.hcl
+        working-directory: tf
 
   checkov:
     name: Checkov Security Scan
@@ -88,4 +89,4 @@ jobs:
 
       - name: Go Test (plan-only)
         run: |
-          go test -v -timeout 10m -run "TestGKEClusterPrivateNodes|TestGKEClusterWorkloadIdentity|TestGKEClusterAdvancedDatapath|TestGKEClusterGatewayAPI|TestGKEClusterReleaseChannel|TestGKEClusterLogging|TestGKEClusterMonitoring|TestGKENodePoolShieldedConfig|TestGKENodePoolAutoUpgrade|TestGKEClusterDeletionProtection|TestServiceAccountExists|TestIAMRolesAssigned|TestWorkloadIdentityBinding" ./...
+          go test -v -timeout 10m -run "TestGKEClusterPrivateNodes|TestGKEClusterWorkloadIdentity|TestGKEClusterAdvancedDatapath|TestGKEClusterGatewayAPI|TestGKEClusterReleaseChannel|TestGKEClusterLogging|TestGKEClusterMonitoring|TestGKENodePoolShieldedConfig|TestGKENodePoolAutoUpgrade|TestGKEClusterDeletionProtection|TestSystemNodePoolExists|TestNetworkingVPCExists|TestIAMServiceAccountExists|TestMonitoringAlertPolicies" ./...

@@ -15,14 +15,18 @@ authorized_network_cidr = "10.0.0.0/8"
 deletion_protection = true
 
 # Main node pool
-main_machine_type = "e2-standard-4"
-main_min_count    = 2
-main_max_count    = 10
+main_machine_type  = "e2-standard-4"
+main_min_count     = 2
+main_max_count     = 10
+main_disk_size_gb  = 200
+main_disk_type     = "pd-balanced"
 
 # System node pool
 system_machine_type = "e2-medium"
 system_min_count    = 2
 system_max_count    = 5
+system_disk_size_gb = 100
+system_disk_type    = "pd-balanced"
 
 # Namespaces
 namespaces = ["default", "prod", "monitoring", "logging"]
@@ -35,7 +39,7 @@ notification_email = "ops-team@example.com"
 enable_alerting    = true
 
 # Backup
-enable_backup        = true
+enable_backup         = true
 backup_retention_days = 30
 
 # Security
@@ -46,3 +50,6 @@ secrets = {
   "db-password" = "Database connection password"
   "api-key"     = "External API key"
 }
+
+# State bucket
+state_bucket_name = "tf-state"

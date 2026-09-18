@@ -21,9 +21,12 @@ resource "google_container_cluster" "cluster" {
   }
 
   master_authorized_networks_config {
-    cidr_blocks {
-      cidr_block   = var.authorized_network_cidr
-      display_name = "Authorized network"
+    dynamic "cidr_blocks" {
+      for_each = var.authorized_network_cidrs
+      content {
+        cidr_block   = cidr_blocks.value
+        display_name = "Authorized network ${cidr_blocks.key}"
+      }
     }
   }
 
@@ -89,6 +92,8 @@ resource "google_container_node_pool" "main" {
 
   node_config {
     machine_type = var.main_machine_type
+    disk_size_gb = var.main_disk_size_gb
+    disk_type    = var.main_disk_type
 
     service_account = var.service_account_email
 
@@ -134,6 +139,8 @@ resource "google_container_node_pool" "system" {
 
   node_config {
     machine_type = var.system_machine_type
+    disk_size_gb = var.system_disk_size_gb
+    disk_type    = var.system_disk_type
 
     service_account = var.service_account_email
 
@@ -168,18 +175,5 @@ resource "google_container_node_pool" "system" {
   upgrade_settings {
     max_surge       = 1
     max_unavailable = 0
-  }
-}
-
-# Kubernetes namespaces
-resource "kubernetes_namespace_v1" "namespaces" {
-  for_each = toset(var.namespaces)
-
-  metadata {
-    name = each.value
-
-    labels = {
-      environment = var.environment
-    }
   }
 }

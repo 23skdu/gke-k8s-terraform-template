@@ -15,14 +15,18 @@ authorized_network_cidr = "0.0.0.0/0"
 deletion_protection = false
 
 # Main node pool
-main_machine_type = "e2-medium"
-main_min_count    = 1
-main_max_count    = 3
+main_machine_type  = "e2-medium"
+main_min_count     = 1
+main_max_count     = 3
+main_disk_size_gb  = 50
+main_disk_type     = "pd-balanced"
 
 # System node pool
 system_machine_type = "e2-small"
 system_min_count    = 1
 system_max_count    = 2
+system_disk_size_gb = 50
+system_disk_type    = "pd-balanced"
 
 # Namespaces
 namespaces = ["default", "dev"]
@@ -35,7 +39,7 @@ notification_email = ""
 enable_alerting    = false
 
 # Backup
-enable_backup        = false
+enable_backup         = false
 backup_retention_days = 7
 
 # Security
@@ -43,3 +47,6 @@ enable_binary_authorization = false
 
 # Secrets
 secrets = {}
+
+# State bucket
+state_bucket_name = "tf-state"

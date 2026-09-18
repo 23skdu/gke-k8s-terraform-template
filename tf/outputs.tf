@@ -44,3 +44,8 @@ output "backup_plan_id" {
   description = "Backup plan ID"
   value       = module.backup.backup_plan_id
 }
+
+output "state_bucket_name" {
+  description = "GCS state bucket name"
+  value       = module.statebucket.bucket_name
+}

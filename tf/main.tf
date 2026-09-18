@@ -6,23 +6,19 @@ terraform {
       source  = "hashicorp/google"
       version = "~> 8.0"
     }
-    google-beta = {
-      source  = "hashicorp/google-beta"
-      version = "~> 8.0"
-    }
     kubernetes = {
       source  = "hashicorp/kubernetes"
       version = "~> 3.0"
     }
   }
+
+  backend "gcs" {
+    bucket = "tf-state"
+    prefix = "terraform/state"
+  }
 }
 
 provider "google" {
-  project = var.project
-  region  = var.region
-}
-
-provider "google-beta" {
   project = var.project
   region  = var.region
 }
