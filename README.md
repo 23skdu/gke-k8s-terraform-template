@@ -1,6 +1,25 @@
 # GKE Kubernetes Terraform Template
 
-Production-ready GKE cluster on GCP with modular architecture, multi-environment support, and comprehensive testing.
+[![CI](https://github.com/23skdu/gke-k8s-terraform-template/actions/workflows/ci.yml/badge.svg)](https://github.com/23skdu/gke-k8s-terraform-template/actions/workflows/ci.yml)
+
+Production-ready **GKE Standard** cluster on Google Cloud, built with a modular
+Terraform architecture, multi-environment support, and a hermetic Terratest
+suite. Nine reusable modules cover networking, identity, cluster, monitoring,
+backup, security, secrets, state, and Kubernetes resources.
+
+## Documentation
+
+Extended documentation lives in [`docs/`](docs/):
+
+- [Architecture](docs/architecture.md) — design, module graph, networking model
+- [Modules](docs/modules.md) — per-module reference
+- [Variables](docs/variables.md) — root variable reference
+- [Environments](docs/environments.md) — dev / staging / prod matrix
+- [Deployment](docs/deployment.md) — deploy and teardown steps
+- [Operations](docs/operations.md) — day-2 ops, Makefile, troubleshooting
+- [Testing](docs/testing.md) — Terratest plan-only and integration tests
+- [Security](docs/security.md) — security posture
+- [CI/CD](docs/ci-cd.md) — pipelines and pre-commit hooks
 
 ## Features
 
@@ -24,7 +43,7 @@ Production-ready GKE cluster on GCP with modular architecture, multi-environment
 - **Deletion protection** enabled by default
 - **CI/CD** via GitHub Actions (fmt, validate, tflint, checkov, terratest)
 - **Pre-commit hooks** for local quality checks
-- **terraform-docs** configuration for auto-generated documentation
+- **Hermetic plan-only tests** that need no GCP credentials
 
 ## Structure
 
@@ -36,6 +55,7 @@ Production-ready GKE cluster on GCP with modular architecture, multi-environment
 ├── .terraform-docs.yml             # terraform-docs config
 ├── CONTRIBUTING.md                 # Development guide
 ├── Makefile                        # Common operations
+├── docs/                           # Extended documentation
 ├── modules/                        # Reusable Terraform modules
 │   ├── networking/                 # VPC, subnets, firewall, Cloud NAT
 │   ├── iam/                        # Service account, IAM roles, Workload Identity
@@ -55,10 +75,14 @@ Production-ready GKE cluster on GCP with modular architecture, multi-environment
 │   ├── variables.tf                # Input variables (with validation)
 │   ├── modules.tf                  # Module calls
 │   ├── outputs.tf                  # Output values
+│   ├── backend.tf                  # GCS backend declaration
 │   └── terraform.tfvars.example
-├── tests/                          # Terratest tests
-│   ├── gke_test.go                 # 19 test cases
-│   ├── main_test.go                # Shared helpers
+├── tests/                          # Terratest tests (Go)
+│   ├── gke_test.go
+│   ├── main_test.go                # Shared helpers + hermetic fixture
+│   ├── modules_plan_test.go        # Plan-only module coverage
+│   ├── oracle_gate_test.go         # Test-suite quality gate
+│   ├── pkg/oracle/                 # Pure-Go validation oracles
 │   ├── go.mod / go.sum
 │   └── README.md
 ├── LICENSE
@@ -119,6 +143,8 @@ make plan ENV=staging
 make apply ENV=staging
 ```
 
+See [Environments](docs/environments.md) for the full matrix.
+
 ## Modules
 
 | Module | Resources | Key Outputs |
@@ -133,25 +159,12 @@ make apply ENV=staging
 | `statebucket` | GCS bucket with versioning | `bucket_name` |
 | `kubernetes` | Kubernetes namespaces | `namespace_names` |
 
+See [Modules](docs/modules.md) for the full reference.
+
 ## Variables
 
-All variables include `validation` blocks. See `tf/variables.tf` for the full list with descriptions, types, defaults, and validation rules.
-
-Key variables:
-- `project` - GCP project ID (validated format)
-- `region` - GCP region (validated format)
-- `environment` - One of: dev, staging, production, test
-- `cluster_name` - GKE cluster name (validated regex)
-- `authorized_network_cidr` - Master access CIDR (default: 0.0.0.0/0)
-- `deletion_protection` - Enable cluster deletion protection (default: true)
-- `main_disk_size_gb` / `main_disk_type` - Main node pool disk config
-- `system_disk_size_gb` / `system_disk_type` - System node pool disk config
-- `namespaces` - Kubernetes namespaces to create
-- `notification_email` - Alert notification email
-- `enable_backup` / `backup_retention_days` - Backup configuration
-- `enable_binary_authorization` - Binary Authorization toggle
-- `secrets` - Map of Secret Manager secrets
-- `state_bucket_name` - GCS state bucket name
+All variables include `validation` blocks. See [`tf/variables.tf`](tf/variables.tf)
+and [Variables](docs/variables.md) for the full list.
 
 ## Testing
 
@@ -161,9 +174,8 @@ make test-integration    # Full tests (creates real resources)
 make test                # All tests
 ```
 
-19 test cases covering: cluster config, node pools, networking, IAM, monitoring, and module existence.
-
-See [tests/README.md](tests/README.md) for details.
+The suite includes plan-only coverage for every module plus an oracle quality
+gate. See [Testing](docs/testing.md) and [tests/README.md](tests/README.md).
 
 ## Linting & Validation
 
@@ -183,11 +195,8 @@ pre-commit install
 
 ## CI/CD
 
-GitHub Actions on push/PR to `main`:
-1. Terraform format check, init, validate (root + each module)
-2. tflint with Google plugin
-3. Checkov security scan
-4. Terratest plan-only tests
+GitHub Actions on push/PR to `main`: format check, init, validate (root + modules),
+tflint, checkov, and Terratest plan-only tests. See [CI/CD](docs/ci-cd.md).
 
 ## Clean Up
 
