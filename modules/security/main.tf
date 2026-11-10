@@ -1,6 +1,6 @@
 resource "google_binary_authorization_policy" "policy" {
-  count    = var.enable_binary_authorization ? 1 : 0
-  project  = var.project
+  count   = var.enable_binary_authorization ? 1 : 0
+  project = var.project
 
   admission_whitelist_patterns {
     name_pattern = "gcr.io/${var.project}/*"
@@ -19,19 +19,19 @@ resource "google_binary_authorization_policy" "policy" {
 }
 
 resource "google_binary_authorization_attestor" "attestor" {
-  count    = var.enable_binary_authorization ? 1 : 0
-  name     = "${var.environment}-attestor"
-  project  = var.project
+  count   = var.enable_binary_authorization ? 1 : 0
+  name    = "${var.environment}-attestor"
+  project = var.project
 
   attestation_authority_note {
-    note_reference = google_binary_authorization_note.note[0].name
+    note_reference = google_container_analysis_note.note[0].name
   }
 }
 
-resource "google_binary_authorization_note" "note" {
-  count    = var.enable_binary_authorization ? 1 : 0
-  name     = "${var.environment}-note"
-  project  = var.project
+resource "google_container_analysis_note" "note" {
+  count   = var.enable_binary_authorization ? 1 : 0
+  name    = "${var.environment}-note"
+  project = var.project
 
   attestation_authority {
     hint {

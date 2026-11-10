@@ -13,6 +13,6 @@ resource "google_gke_backup_backup_plan" "cluster_backup" {
   backup_config {
     include_volume_data = true
     include_secrets     = true
-    all_namespaces     = true
+    all_namespaces      = true
   }
 }

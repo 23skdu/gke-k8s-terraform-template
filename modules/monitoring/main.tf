@@ -27,9 +27,9 @@ resource "google_monitoring_alert_policy" "cluster_health" {
   conditions {
     display_name = "Cluster has unhealthy nodes"
     condition_threshold {
-      filter     = "resource.type = \"k8s_cluster\" AND metric.type = \"kubernetes.io/node/condition/ready\""
-      duration   = "300s"
-      comparison = "COMPARISON_LT"
+      filter          = "resource.type = \"k8s_node\" AND metric.type = \"kubernetes.io/node/condition/ready\""
+      duration        = "300s"
+      comparison      = "COMPARISON_LT"
       threshold_value = 1
 
       aggregations {
@@ -60,9 +60,9 @@ resource "google_monitoring_alert_policy" "high_cpu" {
   conditions {
     display_name = "Node CPU utilization above 80%"
     condition_threshold {
-      filter     = "resource.type = \"k8s_node\" AND metric.type = \"kubernetes.io/node/cpu/allocatable_utilization\""
-      duration   = "300s"
-      comparison = "COMPARISON_GT"
+      filter          = "resource.type = \"k8s_node\" AND metric.type = \"kubernetes.io/node/cpu/allocatable_utilization\""
+      duration        = "300s"
+      comparison      = "COMPARISON_GT"
       threshold_value = 0.8
 
       aggregations {
@@ -89,9 +89,9 @@ resource "google_monitoring_alert_policy" "high_memory" {
   conditions {
     display_name = "Node memory utilization above 85%"
     condition_threshold {
-      filter     = "resource.type = \"k8s_node\" AND metric.type = \"kubernetes.io/node/memory/allocatable_utilization\""
-      duration   = "300s"
-      comparison = "COMPARISON_GT"
+      filter          = "resource.type = \"k8s_node\" AND metric.type = \"kubernetes.io/node/memory/allocatable_utilization\""
+      duration        = "300s"
+      comparison      = "COMPARISON_GT"
       threshold_value = 0.85
 
       aggregations {
@@ -118,9 +118,9 @@ resource "google_monitoring_alert_policy" "auto_repair_failure" {
   conditions {
     display_name = "Node auto-repair failed"
     condition_threshold {
-      filter     = "resource.type = \"gce_instance\" AND metric.type = \"compute.googleapis.com/instance/autoscaler/ending_scale_down_event\""
-      duration   = "60s"
-      comparison = "COMPARISON_GT"
+      filter          = "resource.type = \"gce_instance\" AND metric.type = \"compute.googleapis.com/instance/autoscaler/ending_scale_down_event\""
+      duration        = "60s"
+      comparison      = "COMPARISON_GT"
       threshold_value = 0
 
       aggregations {

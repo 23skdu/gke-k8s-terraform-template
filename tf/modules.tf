@@ -12,14 +12,14 @@ module "statebucket" {
 module "networking" {
   source = "../modules/networking"
 
-  project                = var.project
-  region                 = var.region
-  environment            = var.environment
-  network_name           = var.network_name
-  subnet_cidr            = var.subnet_cidr
-  pods_cidr              = var.pods_cidr
-  services_cidr          = var.services_cidr
-  master_ipv4_cidr_block = var.master_ipv4_cidr_block
+  project                 = var.project
+  region                  = var.region
+  environment             = var.environment
+  network_name            = var.network_name
+  subnet_cidr             = var.subnet_cidr
+  pods_cidr               = var.pods_cidr
+  services_cidr           = var.services_cidr
+  master_ipv4_cidr_block  = var.master_ipv4_cidr_block
   authorized_network_cidr = var.authorized_network_cidr
 }
 
@@ -37,29 +37,29 @@ module "iam" {
 module "gke" {
   source = "../modules/gke"
 
-  project                 = var.project
-  region                  = var.region
-  cluster_name            = var.cluster_name
-  environment             = var.environment
-  network_id              = module.networking.network_id
-  subnet_id               = module.networking.subnet_id
-  pods_range_name         = module.networking.pods_range_name
-  services_range_name     = module.networking.services_range_name
-  master_ipv4_cidr_block  = module.networking.master_ipv4_cidr_block
+  project                  = var.project
+  region                   = var.region
+  cluster_name             = var.cluster_name
+  environment              = var.environment
+  network_id               = module.networking.network_id
+  subnet_id                = module.networking.subnet_id
+  pods_range_name          = module.networking.pods_range_name
+  services_range_name      = module.networking.services_range_name
+  master_ipv4_cidr_block   = module.networking.master_ipv4_cidr_block
   authorized_network_cidrs = [var.authorized_network_cidr]
-  deletion_protection     = var.deletion_protection
-  service_account_email   = module.iam.service_account_email
-  main_machine_type       = var.main_machine_type
-  main_min_count          = var.main_min_count
-  main_max_count          = var.main_max_count
-  main_disk_size_gb       = var.main_disk_size_gb
-  main_disk_type          = var.main_disk_type
-  system_machine_type     = var.system_machine_type
-  system_min_count        = var.system_min_count
-  system_max_count        = var.system_max_count
-  system_disk_size_gb     = var.system_disk_size_gb
-  system_disk_type        = var.system_disk_type
-  namespaces              = var.namespaces
+  deletion_protection      = var.deletion_protection
+  service_account_email    = module.iam.service_account_email
+  main_machine_type        = var.main_machine_type
+  main_min_count           = var.main_min_count
+  main_max_count           = var.main_max_count
+  main_disk_size_gb        = var.main_disk_size_gb
+  main_disk_type           = var.main_disk_type
+  system_machine_type      = var.system_machine_type
+  system_min_count         = var.system_min_count
+  system_max_count         = var.system_max_count
+  system_disk_size_gb      = var.system_disk_size_gb
+  system_disk_type         = var.system_disk_type
+  namespaces               = var.namespaces
 }
 
 # Monitoring
@@ -91,8 +91,8 @@ module "backup" {
 module "security" {
   source = "../modules/security"
 
-  project     = var.project
-  environment = var.environment
+  project                     = var.project
+  environment                 = var.environment
   enable_binary_authorization = var.enable_binary_authorization
 }
 

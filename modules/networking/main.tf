@@ -95,9 +95,9 @@ resource "google_compute_firewall" "allow_nodes_to_master" {
     ports    = ["443", "10250"]
   }
 
-  source_ranges = [var.subnet_cidr]
+  source_ranges      = [var.subnet_cidr]
   destination_ranges = [var.master_ipv4_cidr_block]
-  target_tags   = ["gke-node"]
+  target_tags        = ["gke-node"]
 }
 
 # Cloud Router for NAT

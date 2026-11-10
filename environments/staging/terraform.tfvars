@@ -4,22 +4,22 @@ cluster_name = "gke-staging"
 environment  = "staging"
 
 # Networking
-network_name          = "gke-network"
-subnet_cidr           = "10.16.0.0/20"
-pods_cidr             = "10.20.0.0/14"
-services_cidr         = "10.24.0.0/20"
-master_ipv4_cidr_block = "172.16.0.16/28"
+network_name            = "gke-network"
+subnet_cidr             = "10.16.0.0/20"
+pods_cidr               = "10.20.0.0/14"
+services_cidr           = "10.24.0.0/20"
+master_ipv4_cidr_block  = "172.16.0.16/28"
 authorized_network_cidr = "0.0.0.0/0"
 
 # Cluster
 deletion_protection = false
 
 # Main node pool
-main_machine_type  = "e2-medium"
-main_min_count     = 1
-main_max_count     = 5
-main_disk_size_gb  = 100
-main_disk_type     = "pd-balanced"
+main_machine_type = "e2-medium"
+main_min_count    = 1
+main_max_count    = 5
+main_disk_size_gb = 100
+main_disk_type    = "pd-balanced"
 
 # System node pool
 system_machine_type = "e2-medium"

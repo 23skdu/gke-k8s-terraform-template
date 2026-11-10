@@ -4,22 +4,22 @@ cluster_name = "gke-prod"
 environment  = "production"
 
 # Networking
-network_name          = "gke-network"
-subnet_cidr           = "10.32.0.0/20"
-pods_cidr             = "10.36.0.0/14"
-services_cidr         = "10.40.0.0/20"
-master_ipv4_cidr_block = "172.16.0.32/28"
+network_name            = "gke-network"
+subnet_cidr             = "10.32.0.0/20"
+pods_cidr               = "10.36.0.0/14"
+services_cidr           = "10.40.0.0/20"
+master_ipv4_cidr_block  = "172.16.0.32/28"
 authorized_network_cidr = "10.0.0.0/8"
 
 # Cluster
 deletion_protection = true
 
 # Main node pool
-main_machine_type  = "e2-standard-4"
-main_min_count     = 2
-main_max_count     = 10
-main_disk_size_gb  = 200
-main_disk_type     = "pd-balanced"
+main_machine_type = "e2-standard-4"
+main_min_count    = 2
+main_max_count    = 10
+main_disk_size_gb = 200
+main_disk_type    = "pd-balanced"
 
 # System node pool
 system_machine_type = "e2-medium"
