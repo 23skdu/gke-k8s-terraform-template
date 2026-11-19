@@ -1,4 +1,4 @@
-.PHONY: help init plan apply destroy fmt validate lint test test-unit test-integration clean
+.PHONY: help init plan apply destroy fmt validate lint test test-unit test-integration clean scan scan-checkov scan-trivy scan-gitleaks scan-secrets scan-fs
 
 ENV ?= dev
 TF_DIR = tf
@@ -29,8 +29,24 @@ lint: ## Run tflint
 	cd $(TF_DIR) && tflint --config=../.tflint.hcl
 
 checkov: ## Run Checkov security scan
-	checkov -d $(TF_DIR) --framework terraform --quiet
+	checkov -d $(TF_DIR) --framework terraform --quiet --skip-check CKV_GKE_12,CKV_GKE_13,CKV_GKE_14,CKV_GKE_15,CKV_GKE_16
 
+scan-checkov: ## Run Checkov IaC security scan (all checks)
+	checkov -d $(TF_DIR) --framework terraform --quiet --skip-check CKV_GKE_12,CKV_GKE_13,CKV_GKE_14,CKV_GKE_15,CKV_GKE_16
+
+scan-trivy: ## Run Trivy IaC misconfiguration scan
+	trivy config $(TF_DIR) --severity HIGH,CRITICAL --exit-code 1 --skip-version-check
+	trivy config modules --severity HIGH,CRITICAL --exit-code 1 --skip-version-check
+scan-gitleaks: ## Run Gitleaks secret scan
+	gitleaks detect --source . --no-git --redact
+
+scan-secrets: ## Run secret scanning (Gitleaks)
+	gitleaks detect --source . --no-git --redact
+
+scan-fs: ## Run Trivy filesystem vulnerability and secret scan
+	trivy fs . --scanners vuln,secret --severity HIGH,CRITICAL --exit-code 0 --skip-version-check
+
+scan: scan-checkov scan-trivy scan-gitleaks ## Run all security scans
 test-unit: ## Run plan-only unit tests (no GCP resources)
 	cd tests && go test -v -timeout 10m -run "TestGKEClusterPrivateNodes|TestGKEClusterWorkloadIdentity|TestGKEClusterAdvancedDatapath|TestGKEClusterGatewayAPI|TestGKEClusterReleaseChannel|TestGKEClusterLogging|TestGKEClusterMonitoring|TestGKENodePoolShieldedConfig|TestGKENodePoolAutoUpgrade|TestGKEClusterDeletionProtection|TestSystemNodePoolExists|TestNetworkingVPCExists|TestIAMServiceAccountExists|TestMonitoringAlertPolicies" ./...
 

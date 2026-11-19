@@ -1,0 +1,4 @@
+# State bucket uses Google-managed encryption (CMEK optional via a KMS module).
+GCP-0066
+# State bucket access logging is covered by project-level audit logs / Cloud Logging.
+GCP-0077

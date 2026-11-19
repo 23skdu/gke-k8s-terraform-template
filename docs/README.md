@@ -18,6 +18,7 @@ configuration, operations, testing, and security.
 | [Testing](testing.md) | Terratest suite, plan-only vs integration |
 | [Security](security.md) | Security posture, Binary Authorization, IAM, network |
 | [CI/CD](ci-cd.md) | GitHub Actions pipelines and pre-commit hooks |
+| [Bootstrap Argo CD](bootstrap_argocd.md) | Bootstrapping Argo CD and GitOps into the cluster |
 
 ## Quick Links
 

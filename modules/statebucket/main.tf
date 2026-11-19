@@ -1,4 +1,5 @@
 resource "google_storage_bucket" "tf_state" {
+  # checkov:skip=CKV_GCP_62:Access logging is handled by the project-level audit logs and Cloud Logging
   name                        = "${var.bucket_name}-${var.environment}"
   location                    = var.region
   project                     = var.project

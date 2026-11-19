@@ -12,7 +12,13 @@
 | `make fmt` | Format all `.tf` files |
 | `make validate` | Validate root + modules (backend-free) |
 | `make lint` | Run tflint |
-| `make checkov` | Security scan |
+| `make checkov` | Checkov security scan |
+| `make scan` | Run all security scans (checkov + trivy + gitleaks) |
+| `make scan-checkov` | Checkov IaC security scan |
+| `make scan-trivy` | Trivy IaC misconfiguration scan |
+| `make scan-gitleaks` | Gitleaks secret scan |
+| `make scan-secrets` | Secret scanning (Gitleaks) |
+| `make scan-fs` | Trivy filesystem vulnerability and secret scan |
 | `make test-unit` | Plan-only tests |
 | `make test-integration` | Full integration tests |
 | `make test` | All tests |

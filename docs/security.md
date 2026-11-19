@@ -29,4 +29,8 @@
 ## Static Analysis
 
 - Checkov runs in CI (`soft_fail: true`); tflint with Google plugin.
+- Makefile security targets: `make scan` (checkov + trivy + gitleaks),
+  `make scan-checkov`, `make scan-trivy`, `make scan-gitleaks`,
+  `make scan-secrets`, `make scan-fs`.
 - Pre-commit hooks run fmt, validate, tflint, checkov, terraform-docs.
+- Secret scanning with Gitleaks; dependency/filesystem scanning with Trivy.

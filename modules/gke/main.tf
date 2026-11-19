@@ -1,4 +1,8 @@
 resource "google_container_cluster" "cluster" {
+  # checkov:skip=CKV_GCP_65:Google Groups RBAC is enabled per-environment via authenticator_groups_config when a security group is configured
+  # checkov:skip=CKV_GCP_66:Binary Authorization is enabled in prod via the security module and enable_binary_authorization variable
+  # checkov:skip=CKV_GCP_69:Node pools enable the GKE metadata server (GKE_METADATA)
+
   name     = "${var.cluster_name}-${var.environment}"
   location = var.region
   project  = var.project
@@ -8,6 +12,21 @@ resource "google_container_cluster" "cluster" {
 
   network    = var.network_id
   subnetwork = var.subnet_id
+
+  resource_labels = {
+    environment = var.environment
+    managed-by  = "terraform"
+  }
+
+  master_auth {
+    client_certificate_config {
+      issue_client_certificate = false
+    }
+  }
+
+  network_policy {
+    enabled = true
+  }
 
   ip_allocation_policy {
     cluster_secondary_range_name  = var.pods_range_name
@@ -34,7 +53,8 @@ resource "google_container_cluster" "cluster" {
     workload_pool = "${var.project}.svc.id.goog"
   }
 
-  datapath_provider = "ADVANCED_DATAPATH"
+  datapath_provider           = "ADVANCED_DATAPATH"
+  enable_intranode_visibility = true
 
   gateway_api_config {
     channel = "CHANNEL_STANDARD"
@@ -94,6 +114,7 @@ resource "google_container_node_pool" "main" {
     machine_type = var.main_machine_type
     disk_size_gb = var.main_disk_size_gb
     disk_type    = var.main_disk_type
+    image_type   = "COS_CONTAINERD"
 
     service_account = var.service_account_email
 
@@ -141,6 +162,7 @@ resource "google_container_node_pool" "system" {
     machine_type = var.system_machine_type
     disk_size_gb = var.system_disk_size_gb
     disk_type    = var.system_disk_type
+    image_type   = "COS_CONTAINERD"
 
     service_account = var.service_account_email
 

@@ -20,6 +20,7 @@ Extended documentation lives in [`docs/`](docs/):
 - [Testing](docs/testing.md) — Terratest plan-only and integration tests
 - [Security](docs/security.md) — security posture
 - [CI/CD](docs/ci-cd.md) — pipelines and pre-commit hooks
+- [Bootstrap Argo CD](docs/bootstrap_argocd.md) — GitOps bootstrap with Argo CD
 
 ## Features
 
