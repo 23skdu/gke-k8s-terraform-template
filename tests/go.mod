@@ -1,6 +1,6 @@
 module github.com/23skdu/gke-k8s-terraform-template
 
-go 1.27.0
+go 1.27.4
 
 require (
 	github.com/gruntwork-io/terratest v1.0.1
