@@ -3,21 +3,9 @@ updates:
   - package-ecosystem: "gomod"
     directory: "/tests"
     schedule:
-      interval: "daily"
-    open-pull-requests-limit: 10
-    labels:
-      - "dependencies"
-      - "go"
-    commit-message:
-      prefix: "deps"
+      interval: "weekly"
 
-  - package-ecosystem: "terraform"
-    directory: "/tf"
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
-      interval: "daily"
-    open-pull-requests-limit: 10
-    labels:
-      - "dependencies"
-      - "terraform"
-    commit-message:
-      prefix: "deps"
+      interval: "weekly"
